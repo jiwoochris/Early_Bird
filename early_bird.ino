@@ -4,12 +4,11 @@
 #define BUZZER 8
 #define BUTTON1 6
 #define BUTTON2 7
-#define RELAY 3 
+#define RELAY 3
 
 #define C 262 // 도 
 #define D 294 // 레 
-#define E 330 // 미 
-#define F 349 // 파 
+#define E 330 // 미
 #define G 392 // 솔 
 #define A 440 // 라 
 #define B 494 // 시
@@ -17,87 +16,111 @@
 int notes[25] = { G, G, A, A, G, G, E, G, G, E, E, D, G, G, A, A, G, G, E, G, E, D, E, C };
 int num = 0;
 
-void setup(){
+void setup() {
   Serial.begin(9600);
-  pinMode(RELAY,OUTPUT); 
-  pinMode(BUZZER,OUTPUT);
-  pinMode(BUTTON1,INPUT);
-  pinMode(BUTTON2,INPUT); 
+  pinMode(RELAY, OUTPUT);
+  pinMode(BUZZER, OUTPUT);
+  pinMode(BUTTON1, INPUT);
+  pinMode(BUTTON2, INPUT);
 
-  setTime(16,0,0,17,11,21);
-} 
-
-int i =0;
-int count1 =0;
-int count2 =0;
-
-void ringing(){
-  tone (BUZZER, notes[ i ], 200);
-  delay(800);
-  i++;
-  if(i == 12)
-   delay(200);
-  if(i==24)
-   i=0;
-   delay(200);
+  setTime(16, 0, 0, 17, 11, 21);
 }
 
-void turn_off(){
-  if(digitalRead(BUTTON1)==HIGH){
-      count1 = 1;
-      switch(count2){
-        case(1): count1 =2; break;
-        case(2): count1 =3;
+int i = 0;
+int count1 = 0;
+int count2 = 0;
+int hour_set;
+int minute_set;
+
+bool set_alarm() {
+  String s;
+
+  Serial.println("Set your alarm (ex: 9:00)");
+
+  if (Serial.available() > 0) {
+    s = Serial.readString();
+    if (s != NULL) {
+      s.trim();
+      int split = s.indexOf(":");
+      hour_set =  s.substring(0, split).toInt();
+      minute_set = s.substring(split + 1, s.length()).toInt();
     }
   }
-    if(digitalRead(BUTTON2)==HIGH){
-       switch(count1){
-         case(1): count2 =1; break;
-         case(2): count2 =2; break;
-         case(3): count2 =3;
-       }
-    }
+  return true;
 }
 
-void digitalClockDisplay()
-{
+void wait_to_time() {
+  while (hour_set != hour() && minute_set != minute()) {}
+
+  Serial.print("It's ");
   Serial.print(hour());
-  printDigits(minute());
-  printDigits(second());
-  Serial.print(" ");
-  Serial.print(day());
-  Serial.print(" ");
-  Serial.print(month());
-  Serial.print(" ");
-  Serial.print(year());
-  Serial.println();
+  Serial.print(" : ");
+  Serial.print(minute());
+  Serial.println("\nTime to Wake up!!");
 }
 
-void printDigits(int digits)
-{
-  // utility function for clock display: prints preceding colon and leading 0
-  Serial.print(":");
-  if(digits < 10)
-    Serial.print('0');
-  Serial.print(digits);  
-}
-
-void loop(){
-  
-  while(Serial.available()){
-    char data = Serial.read();
-    Serial.print(data);
+void ringing() {
+  if (hour() == hour_set && minute() == minute_set) {
+    tone (BUZZER, notes[ i ], 200);
+    delay(800);
+    i++;
+    if (i == 12)
+      delay(200);
+    if (i == 24)
+      i = 0;
+    delay(200);
   }
-  
-  digitalWrite(RELAY,HIGH); 
-  while(count2<3){
-    ringing();
 
-    turn_off();
+  else {
+    tone (BUZZER, notes[ i ], 200);
     
-    Serial.println(count1);
-    Serial.println(count2);
+    if (i == 6 || i == 18)
+      delay(400);
+    else if (i == 11)
+      delay(800);
+    else if (i == 24){
+      delay(800);
+      i = 0;
+    }
+    else
+      delay(200);
+    i++;
+
+    digitalWrite(RELAY, i % 2);
   }
-  digitalWrite(RELAY,LOW);
-  exit(0);
+}
+
+void turn_off() {
+  if (digitalRead(BUTTON1) == HIGH) {
+    count1 = 1;
+    switch (count2) {
+      case (1): count1 = 2; break;
+      case (2): count1 = 3;
+    }
+  }
+
+  if (digitalRead(BUTTON2) == HIGH) {
+    switch (count1) {
+      case (1): count2 = 1; break;
+      case (2): count2 = 2; break;
+      case (3): count2 = 3;
+    }
+  }
+}
+
+void loop() {
+
+  while (!set_alarm()) {
+    Serial.println("[Error] Usage Ex) 13:00. Try it again");
+  }
+  Serial.println("The alarm is set successfully");
+
+  wait_to_time();
+
+  digitalWrite(RELAY, HIGH);
+  while (count2 < 3) {
+    ringing();
+    turn_off();
+  }
+  digitalWrite(RELAY, LOW);
 }
