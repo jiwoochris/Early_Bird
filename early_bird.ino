@@ -62,17 +62,6 @@ void wait_to_time() {
 void ringing() {
   if (hour() == hour_set && minute() == minute_set) {
     tone (BUZZER, notes[ i ], 200);
-    delay(800);
-    i++;
-    if (i == 12)
-      delay(200);
-    if (i == 24)
-      i = 0;
-    delay(200);
-  }
-
-  else {
-    tone (BUZZER, notes[ i ], 200);
     
     if (i == 6 || i == 18)
       delay(400);
@@ -84,6 +73,22 @@ void ringing() {
     }
     else
       delay(200);
+    i++;
+  }
+
+  else {
+    tone (BUZZER, notes[ i ], 100);
+    
+    if (i == 6 || i == 18)
+      delay(200);
+    else if (i == 11)
+      delay(400);
+    else if (i == 24){
+      delay(400);
+      i = 0;
+    }
+    else
+      delay(100);
     i++;
 
     digitalWrite(RELAY, i % 2);
