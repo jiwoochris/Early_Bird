@@ -41,8 +41,8 @@ void setup() {
 int i = 0;
 int count1 = 0;
 int count2 = 0;
-int hour_set = NULL;
-int minute_set = NULL;
+int hour_set;
+int minute_set;
 
 void set_alarm() {
   lcd.clear();
@@ -58,22 +58,10 @@ void set_alarm() {
   lcd.clear();
 
   while(digitalRead(SET_BUTTON) == LOW){
-    hour_set = analogRead(resistorPin1);
-    hour_set = map(hour_set,0,1023,23,0);
-    lcd.setCursor(0,0);
-    if(hour_set<10){
-      lcd.print('0');
-      lcd.setCursor(1,0);
-    }
-    lcd.print(hour_set);
+    hour_set = map(analogRead(resistorPin1),0,1023,23,0);
+    minute_set = map(analogRead(resistorPin2),0,1023,59,0);
 
-    lcd.setCursor(2,0);
-    lcd.print(":");
-
-    minute_set = analogRead(resistorPin2);  
-    minute_set = map(minute_set,0,1023,59,0);
-    lcd.setCursor(3,0);
-    lcd.print(minute_set);
+    print_time(0, 0, hour_set, minute_set);
   }
 }
 
@@ -87,20 +75,8 @@ void wait_to_time() {
         lcd.clear();
       lcd.setCursor(0,0);
       lcd.print("Current time ");
-      lcd.setCursor(0,1);
-  
       
-      if(hour()<10){
-        lcd.print('0');
-        lcd.setCursor(1,1);
-      }
-      lcd.print(hour());
-  
-      lcd.setCursor(2,1);
-      lcd.print(":");
-      
-      lcd.setCursor(3,1);
-      lcd.print(minute());
+      print_time(0, 1, hour(), minute());
       prev = LOW;
     }
 
@@ -109,20 +85,8 @@ void wait_to_time() {
         lcd.clear();
       lcd.setCursor(0,0);
       lcd.print("Set time ");
-      lcd.setCursor(0,1);
-  
       
-      if(hour()<10){
-        lcd.print('0');
-        lcd.setCursor(1,1);
-      }
-      lcd.print(hour_set);
-  
-      lcd.setCursor(2,1);
-      lcd.print(":");
-      
-      lcd.setCursor(3,1);
-      lcd.print(minute_set);
+      print_time(0, 1, hour_set, minute_set);
 
       prev = HIGH;
     }
@@ -133,16 +97,8 @@ void wait_to_time() {
   lcd.print("Time to Wake up!");
   lcd.setCursor(0, 1);
   lcd.print("It's ");
-  lcd.setCursor(5, 1);
-  if(hour()<10){
-      lcd.print('0');
-      lcd.setCursor(1,0);
-    }
-  lcd.print(hour());
-  lcd.setCursor(7, 1);
-  lcd.print(":");  
-  lcd.setCursor(8, 1);
-  lcd.print(minute());
+  
+  print_time(5, 1, hour(), minute());
 }
 
 void ringing() {
@@ -204,6 +160,25 @@ void reset(){
   digitalWrite(RELAY, LOW);
   count1 = 0;
   count2 = 0;
+}
+
+void print_time(int init_x, int init_y, int hour, int minute){
+  lcd.setCursor(init_x, init_y);
+  if(hour<10){
+    lcd.print('0');
+    lcd.setCursor(init_x+1, init_y);
+  }
+  lcd.print(hour);
+
+  lcd.setCursor(init_x+2, init_y);
+  lcd.print(":");
+
+  lcd.setCursor(init_x+3, init_y);
+  if(minute<10){
+    lcd.print('0');
+    lcd.setCursor(init_x+4, init_y);
+  }
+  lcd.print(minute);
 }
 
 void loop() {
