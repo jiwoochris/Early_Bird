@@ -1,82 +1,67 @@
 #include <Time.h>
 #include <TimeLib.h>
-#include <LiquidCrystal.h>
+#include <LiquidCrystal.h> 
 
 const int resistorPin1 = A0;  
 const int resistorPin2 = A1;
 
-#define SET_BUTTON 8
+#define SET_BUTTON 8 // define pin numbers as english names for code readbility
 #define BUZZER 9
 #define BUTTON1 10
 #define BUTTON2 11
 #define RELAY 12
 #define LED 13
 
-#define C 262 // 도 
+#define C 262 // 도   // make tones for a song
 #define D 294 // 레 
 #define E 330 // 미
 #define G 392 // 솔 
 #define A 440 // 라 
 #define B 494 // 시
 
-LiquidCrystal lcd(7,6,5,4,3,2);
+LiquidCrystal lcd(7,6,5,4,3,2); 
 
-int notes[25] = { G, G, A, A, G, G, E, G, G, E, E, D, G, G, A, A, G, G, E, G, E, D, E, C };
+int notes[25] = { G, G, A, A, G, G, E, G, G, E, E, D, G, G, A, A, G, G, E, G, E, D, E, C }; // 학교종이 땡땡땡 song
 int num = 0;
-
-void setup() {
-  pinMode(RELAY, OUTPUT);
-  pinMode(BUZZER, OUTPUT);
-  pinMode(BUTTON1, INPUT);
-  pinMode(BUTTON2, INPUT);
-  pinMode(resistorPin1, INPUT); 
-  pinMode(resistorPin2, INPUT);
-  pinMode(SET_BUTTON, INPUT);
-  
-  lcd.begin(16,2); 
-
-  setTime(23, 55, 0, 20, 11, 21);
-}
-
 int i = 0;
-int count1 = 0;
+int count1 = 0; //for counting pressed numbers of two stop buttons
 int count2 = 0;
-int hour_set;
-int minute_set;
+int hour_set; // hour of the alarm
+int minute_set; // minute of the alarm
 
-void set_alarm() {
+void set_alarm() { // setting the alarm
   lcd.clear();
   lcd.setCursor(0,0);
-  lcd.print("Set your alarm");
+  lcd.print("Set your alarm"); // lcd prints announcement 'set your alarm'
   
-  while(digitalRead(SET_BUTTON) == LOW){}
+  while(digitalRead(SET_BUTTON) == LOW){} // when set button isn't pressed
   
   lcd.clear();
   lcd.setCursor(0,0);
-  lcd.print("Loading . . .");
+  lcd.print("Loading . . ."); // lcd prints annuncement 'loading' 1 second.
   delay(1000);
   lcd.clear();
 
-  while(digitalRead(SET_BUTTON) == LOW){
-    hour_set = map(analogRead(resistorPin1),0,1023,23,0);
+  while(digitalRead(SET_BUTTON) == LOW){ // when set button isn't pressed
+    hour_set = map(analogRead(resistorPin1),0,1023,23,0); // mapping the value of resistor to hours
     minute_set = map(analogRead(resistorPin2),0,1023,59,0);
 
     print_time(0, 0, hour_set, minute_set);
   }
 }
 
-void wait_to_time() {
+void waiting_time() {
   int prev;
   lcd.clear();
   
   while (!(hour_set == hour() && minute_set == minute())) {
     if(digitalRead(SET_BUTTON) == LOW){
-      if(prev == HIGH)
+      if(prev == HIGH) // 어떤 기능?
         lcd.clear();
       lcd.setCursor(0,0);
       lcd.print("Current time ");
       
-      print_time(0, 1, hour(), minute());
+      print_time(0, 1, hour(), minute()); // hour(), minute() 어떤 library 사용? 정확히 어떤 의미// hour(), minute() 어떤 library 사용? 정확히 어떤 의미
       prev = LOW;
     }
 
@@ -92,13 +77,25 @@ void wait_to_time() {
     }
   }
 
+}
+void alarm_time(){
   lcd.clear();
   lcd.setCursor(0,0);
   lcd.print("Time to Wake up!");
   lcd.setCursor(0, 1);
   lcd.print("It's ");
   
-  print_time(5, 1, hour(), minute());
+  print_time(5, 1, hour(), minute()); 
+  
+  light_on();
+  
+  while (count2 < 3) {
+    ringing();
+    counting_stop_buttons();
+  }
+ }
+void light_on(){
+  digitalWrite(RELAY, HIGH);
 }
 
 void ringing() {
@@ -137,7 +134,7 @@ void ringing() {
   }
 }
 
-void turn_off() {
+void counting_stop_buttons() {
   
   if (digitalRead(BUTTON1) == HIGH) {
     count1 = 1;
@@ -181,17 +178,28 @@ void print_time(int init_x, int init_y, int hour, int minute){
   lcd.print(minute);
 }
 
+void setup() {
+  pinMode(RELAY, OUTPUT); // pin setting
+  pinMode(BUZZER, OUTPUT);
+  pinMode(BUTTON1, INPUT);
+  pinMode(BUTTON2, INPUT);
+  pinMode(resistorPin1, INPUT); 
+  pinMode(resistorPin2, INPUT);
+  pinMode(SET_BUTTON, INPUT);
+  
+  lcd.begin(16,2); 
+
+  setTime(23, 55, 0, 20, 11, 21); // set the current time by yourself // 각 인자가 무엇을 의미하는 지 설명, library와 연결해서 함수 설명
+}
+
+
 void loop() {
 
   set_alarm();
   
-  wait_to_time();
+  waiting_time();
 
-  digitalWrite(RELAY, HIGH);
-  while (count2 < 3) {
-    ringing();
-    turn_off();
-  }
-
+  alarm_time(); // light, buzzer, stop button occurs
+  
   reset();
 }
