@@ -12,94 +12,96 @@ const int resistorPin2 = A1;
 #define RELAY 12
 #define LED 13
 
-#define C 262 // 도   // make tones for a song
-#define D 294 // 레 
-#define E 330 // 미
-#define G 392 // 솔 
-#define A 440 // 라 
-#define B 494 // 시
+#define C 262 // do   // make tones for a song
+#define D 294 // re 
+#define E 330 // mi
+#define G 392 // sol
+#define A 440 // la 
+#define B 494 // ti
 
 LiquidCrystal lcd(7,6,5,4,3,2); 
 
 int notes[25] = { G, G, A, A, G, G, E, G, G, E, E, D, G, G, A, A, G, G, E, G, E, D, E, C }; // 학교종이 땡땡땡 song
 int num = 0;
 int i = 0;
-int count1 = 0; //for counting pressed numbers of two stop buttons
+int count1 = 0; //variables for counting the number that two stop buttons are pressed
 int count2 = 0;
 int hour_set; // hour of the alarm
 int minute_set; // minute of the alarm
 
-void set_alarm() { // setting the alarm
+void set_alarm() { // set the alarm
   lcd.clear();
   lcd.setCursor(0,0);
-  lcd.print("Set your alarm"); // lcd prints announcement 'set your alarm'
+  lcd.print("Set your alarm"); // lcd display an announcement 'set your alarm'
   
-  while(digitalRead(SET_BUTTON) == LOW){} // when set button isn't pressed
+  while(digitalRead(SET_BUTTON) == LOW){} // block until the set button is pressed
   
   lcd.clear();
   lcd.setCursor(0,0);
-  lcd.print("Loading . . ."); // lcd prints annuncement 'loading' 1 second.
+  lcd.print("Loading . . ."); // lcd displays an annuncement 'loading' 1 second.
   delay(1000);
   lcd.clear();
 
-  while(digitalRead(SET_BUTTON) == LOW){ // when set button isn't pressed
-    hour_set = map(analogRead(resistorPin1),0,1023,23,0); // mapping the value of resistor to hours
-    minute_set = map(analogRead(resistorPin2),0,1023,59,0);
+  while(digitalRead(SET_BUTTON) == LOW){ 
+    hour_set = map(analogRead(resistorPin1),0,1023,23,0); // mapping the value of resistor to hour
+    minute_set = map(analogRead(resistorPin2),0,1023,59,0);// mapping the value of resistor to minute
 
-    print_time(0, 0, hour_set, minute_set);
+    print_time(0, 0, hour_set, minute_set); // lcd diplays alarm time
   }
 }
 
-void waiting_time() {
-  int prev;
+void waiting_time() {// waiting time: before the alarm time
+  int prev; // prev variable is like a lock. 
+            //It makes lcd clear "current" time for displaying "set time" the time only that you press the set button
   lcd.clear();
   
-  while (!(hour_set == hour() && minute_set == minute())) {
-    if(digitalRead(SET_BUTTON) == LOW){
-      if(prev == HIGH) // 어떤 기능?
+  while (!(hour_set == hour() && minute_set == minute())) { // when current time is not alarm time 
+                                                            // hour() returns current hour, minute() returns current minute
+    if(digitalRead(SET_BUTTON) == LOW){ // lcd diplays current time basically
+      if(prev == HIGH) 
         lcd.clear();
       lcd.setCursor(0,0);
       lcd.print("Current time ");
       
-      print_time(0, 1, hour(), minute()); // hour(), minute() 어떤 library 사용? 정확히 어떤 의미// hour(), minute() 어떤 library 사용? 정확히 어떤 의미
+      print_time(0, 1, hour(), minute());// print current time in the lcd
       prev = LOW;
     }
 
-    else{
+    else{ // if you press the set button, lcd displays alarm time
       if(prev == LOW)
         lcd.clear();
       lcd.setCursor(0,0);
       lcd.print("Set time ");
       
-      print_time(0, 1, hour_set, minute_set);
+      print_time(0, 1, hour_set, minute_set);// print alarm time in the lcd
 
       prev = HIGH;
     }
   }
 
 }
-void alarm_time(){
+void alarm_time(){// alarm time
   lcd.clear();
   lcd.setCursor(0,0);
   lcd.print("Time to Wake up!");
   lcd.setCursor(0, 1);
   lcd.print("It's ");
   
-  print_time(5, 1, hour(), minute()); 
+  print_time(5, 1, hour(), minute()); // prit alarm time in the lcd
   
-  light_on();
+  light_on(); // light comes on
   
-  while (count2 < 3) {
+  while (count2 < 3) { // when two stopp buttons are pressed 3 times each in rotation, the loop stop
     ringing();
     counting_stop_buttons();
   }
  }
-void light_on(){
+void light_on(){// turn on the light
   digitalWrite(RELAY, HIGH);
 }
 
-void ringing() {
-  if (hour() == hour_set && minute() == minute_set) {
+void ringing() { // make buzzer sound song '학교종이 땡땡땡' and light blink
+  if (hour() == hour_set && minute() == minute_set) {// when alarm time comes, buzzer sound the song '학교종이 땡땡땡' with normal speed
     tone (BUZZER, notes[ i ], 400);
     
     if (i == 6 || i == 18)
@@ -115,7 +117,7 @@ void ringing() {
     i++;
   }
 
-  else {
+  else {// after 1 minute, the song faster 1.5 times and the light blinks
     tone (BUZZER, notes[ i ], 200);
     
     if (i == 6 || i == 18)
@@ -130,11 +132,11 @@ void ringing() {
       delay(200);
     i++;
 
-    digitalWrite(RELAY, i % 2);
+    digitalWrite(RELAY, i % 2); // light blinks
   }
 }
 
-void counting_stop_buttons() {
+void counting_stop_buttons() { // count the number that stop buttons are pressed
   
   if (digitalRead(BUTTON1) == HIGH) {
     count1 = 1;
@@ -153,13 +155,13 @@ void counting_stop_buttons() {
   }
 }
 
-void reset(){
-  digitalWrite(RELAY, LOW);
+void reset(){// reset alarm 
+  digitalWrite(RELAY, LOW); // turn off the light
   count1 = 0;
   count2 = 0;
 }
 
-void print_time(int init_x, int init_y, int hour, int minute){
+void print_time(int init_x, int init_y, int hour, int minute){ // print time in the lcd
   lcd.setCursor(init_x, init_y);
   if(hour<10){
     lcd.print('0');
@@ -189,7 +191,7 @@ void setup() {
   
   lcd.begin(16,2); 
 
-  setTime(23, 55, 0, 20, 11, 21); // set the current time by yourself // 각 인자가 무엇을 의미하는 지 설명, library와 연결해서 함수 설명
+  setTime(23, 55, 0, 20, 11, 21); // set the start time //it's like a clock
 }
 
 
@@ -199,7 +201,7 @@ void loop() {
   
   waiting_time();
 
-  alarm_time(); // light, buzzer, stop button occurs
+  alarm_time();
   
   reset();
 }
