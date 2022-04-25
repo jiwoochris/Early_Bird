@@ -5,7 +5,6 @@
 ### Diverse devices for effective alarm:
 - Buzzer sound a song “학교 종이 땡땡땡”
 -> stimulate the sense of hearing & imply the fact that you have to go to school.
-#####
 - Light comes on in alarm time
 -> stimulate the sense of vision
 
